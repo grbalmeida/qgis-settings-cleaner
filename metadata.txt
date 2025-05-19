@@ -1,0 +1,20 @@
+[general]
+name=QGIS Settings Cleaner
+qgisMinimumVersion=3.34
+description=Simple plugin that disables QGIS settings and restarts the application.
+description[pt]=Plugin simples que apaga as configurações do QGIS e reinicia a aplicação.
+about=This plugin allows users to clean up and remove all QGIS configuration settings from the local machine. It deletes settings related to language, proxy, CRS, database connections, WFS/WMS, XYZ tiles, and all other saved QGIS preferences. This is useful for resetting QGIS to its default state or preparing an environment for clean deployment or testing.
+about[pt]=Este plugin permite limpar e remover todas as configurações do QGIS armazenadas na máquina local. Ele exclui as definições relacionadas a idioma, proxy, SRC, conexões com banco de dados, serviços WFS/WMS, camadas XYZ e todas as demais preferências salvas do QGIS. É útil para restaurar o QGIS ao estado padrão ou preparar um ambiente limpo para testes ou implantação.
+version=1.0.0
+author=Gilvan Ribeiro de Almeida
+email=g.r.almeida@live.com
+homepage=https://github.com/grbalmeida/qgis-settings-cleaner
+tracker=https://github.com/grbalmeida/qgis-settings-cleaner/issues
+repository=https://github.com/grbalmeida/qgis-settings-cleaner
+category=Plugins
+icon=icon.png
+hasProcessingProvider=no
+tags=reset,settings,cleanup,qgis,configuration
+experimental=False
+deprecated=False
+server=False

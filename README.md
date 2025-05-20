@@ -71,3 +71,9 @@ Additional translations can be added by contributing `.ts` and `.qm` files in th
 ## License
 
 This program is licensed under GNU GPL v.2 or any later version.
+
+### Credits
+
+This plugin was developed based on the source code of a plugin originally created by the Technical-Scientific Directorate (SEGEO/DITEC/PF) of the Brazilian Federal Police, as part of the *Inteligeo* application.
+
+Special thanks to the [Technical-Scientific Directorate of the Brazilian Federal Police (SEGEO/DITEC/PF)](https://www.gov.br/pf/pt-br/acesso-a-informacao/estatisticas/diretoria-tecnico-cientifica-ditec) for their contribution to the open-source community and for providing a foundation for this work.

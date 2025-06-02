@@ -74,6 +74,6 @@ This program is licensed under GNU GPL v.2 or any later version.
 
 ### Credits
 
-This plugin was developed based on the source code of a plugin originally created by the Technical-Scientific Directorate (SEGEO/DITEC/PF) of the Brazilian Federal Police, as part of the *Inteligeo* application.
+This plugin is published on behalf of the Brazilian Federal Police (SEGEO/DITEC/PF), under authorization of the institution, and is part of the Inteligeo initiative.
 
-Special thanks to the [Technical-Scientific Directorate of the Brazilian Federal Police (SEGEO/DITEC/PF)](https://www.gov.br/pf/pt-br/acesso-a-informacao/estatisticas/diretoria-tecnico-cientifica-ditec) for their contribution to the open-source community and for providing a foundation for this work.
+Official release authorized by the [Technical-Scientific Directorate of the Brazilian Federal Police (SEGEO/DITEC/PF)](https://www.gov.br/pf/pt-br/acesso-a-informacao/estatisticas/diretoria-tecnico-cientifica-ditec).

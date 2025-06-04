@@ -211,8 +211,8 @@ class QGISSettingsCleaner(QObject):
                 for prefix in CATEGORIES[name]:
                     self.remove_settings_by_prefix(prefix)
 
-            if name == "CRS":
-                self.remove_custom_qgis_crs()
+                if name == "CRS":
+                    self.remove_custom_qgis_crs()
 
         QMessageBox.information(
             dialog,

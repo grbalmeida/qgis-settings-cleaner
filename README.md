@@ -1,6 +1,6 @@
 # QGIS Settings Cleaner
 
-A simple QGIS plugin that allows users to **reset QGIS settings to factory defaults** with a single click.
+A simple QGIS plugin that allows users to **clear all QGIS settings and restore factory defaults** with a single click.
 
 ## Features
 
@@ -28,9 +28,9 @@ Sometimes QGIS settings become corrupted or overly complex due to extensive cust
 ## Usage
 
 1. Install the plugin from the QGIS Plugin Repository.
-2. In QGIS, go to the **Plugins** menu and click on **Reset QGIS** → **Reset QGIS Settings**.
+2. In QGIS, go to the **Plugins** menu and click on **Clean QGIS** → **Clean QGIS Settings**.
 3. Confirm the operation in the dialog box.
-4. Restart QGIS when prompted.
+4. Click Close to exit QGIS, then reopen it manually.
 
 ⚠️ **Note:** This operation is irreversible. All user settings will be permanently removed.
 

@@ -1,31 +1,33 @@
 import os
 import shutil
-from PyQt5.QtWidgets import (
-    QAction, QDialog, QVBoxLayout, QCheckBox, QPushButton, QMessageBox, QTextBrowser,
-    QLabel, QSpacerItem, QSizePolicy, QGroupBox, QHBoxLayout, QFrame
-)
-from PyQt5.QtCore import QObject, QSettings, QTranslator, QCoreApplication, Qt
-from PyQt5.QtGui import QIcon
-from qgis.core import QgsApplication
-from qgis.utils import iface
 import sqlite3
+
+from PyQt5.QtCore import QCoreApplication, QObject, QSettings, Qt, QTranslator
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (
+    QAction,
+    QCheckBox,
+    QDialog,
+    QFrame,
+    QGroupBox,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QSizePolicy,
+    QSpacerItem,
+    QVBoxLayout,
+)
+from qgis.core import Qgis, QgsApplication, QgsMessageLog
+from qgis.utils import iface
+
 from . import resources_rc
 
 resources_rc.qInitResources()
 
 CATEGORIES = {
-    "Language": [
-        "locale"
-    ],
-    "Proxy": [
-        "proxy",
-        "network/network-timeout",
-        "qgis/networkAndProxy"
-    ],
-    "CRS": [
-        "qgis/coordinate-reference-system",
-        "CRS"
-    ],
+    "Language": ["locale"],
+    "Proxy": ["proxy", "network/network-timeout", "qgis/networkAndProxy"],
+    "CRS": ["qgis/coordinate-reference-system", "CRS"],
     "Database": [
         "connections/pgsql",
         "postgresql/connections",
@@ -46,13 +48,13 @@ CATEGORIES = {
         "connections-wfs",
         "qgis/connections-wfs",
         "connections/ows/items/wfs",
-        "qgis/connections/wfs"
+        "qgis/connections/wfs",
     ],
-    "XYZ Tiles": [
-        "connections/xyz",
-        "qgis/connections-xyz"
-    ]
+    "XYZ Tiles": ["connections/xyz", "qgis/connections-xyz"],
 }
+
+TAG = "QGIS Settings Cleaner"
+
 
 class QGISSettingsCleaner(QObject):
     def __init__(self, iface):
@@ -72,10 +74,10 @@ class QGISSettingsCleaner(QObject):
         """
 
         locale = QSettings().value("locale/userLocale", "en")
-        base_locale = locale.split('_')[0]
+        base_locale = locale.split("_")[0]
 
         filename = f"QGISSettingsCleaner_{base_locale}.qm"
-        i18n_path = os.path.join(self.plugin_dir, 'i18n', filename)
+        i18n_path = os.path.join(self.plugin_dir, "i18n", filename)
 
         if os.path.exists(i18n_path):
             self.translator = QTranslator()
@@ -83,21 +85,23 @@ class QGISSettingsCleaner(QObject):
                 QCoreApplication.installTranslator(self.translator)
 
     def initGui(self):
-        icon_path = os.path.join(self.plugin_dir, 'icon.png')
+        icon_path = os.path.join(self.plugin_dir, "icon.png")
         icon = QIcon(icon_path)
-        self.action = QAction(icon, self.tr("Reset QGIS Settings"), self.iface.mainWindow())
+        self.action = QAction(
+            icon, self.tr("Clean QGIS Settings"), self.iface.mainWindow()
+        )
         self.action.triggered.connect(self.show_settings_dialog)
-        self.iface.addPluginToMenu("&" + self.tr("Reset QGIS"), self.action)
+        self.iface.addPluginToMenu("&" + self.tr("Clean QGIS"), self.action)
         self.iface.addToolBarIcon(self.action)
 
     def unload(self):
-        self.iface.removePluginMenu("&" + self.tr("Reset QGIS"), self.action)
+        self.iface.removePluginMenu("&" + self.tr("Clean QGIS"), self.action)
         self.iface.removeToolBarIcon(self.action)
 
     def remove_settings_by_prefix(self, prefix):
         """
         Removes all QGIS settings whose keys start with the given prefix.
-        
+
         Returns a list of the removed keys.
         """
 
@@ -109,24 +113,24 @@ class QGISSettingsCleaner(QObject):
             if key.lower().startswith(prefix.lower()):
                 settings.remove(key)
                 deleted.append(key)
-        
+
         settings.sync()
         return deleted
 
     def show_settings_dialog(self):
         """
-        Displays a dialog for the user to select which QGIS settings to reset.
-        Provides options for selective or full reset with explanatory disclaimer.
+        Displays a dialog for the user to select which QGIS settings to clean.
+        Provides options for selective or full clean with explanatory disclaimer.
         """
         dialog = QDialog(self.iface.mainWindow())
-        dialog.setWindowTitle(self.tr("Select Settings to Reset"))
+        dialog.setWindowTitle(self.tr("Select Settings to Clean"))
         dialog.setStyleSheet("font-family: 'Sans Serif'; font-size: 13px;")
         dialog.setWindowIcon(QIcon(os.path.join(self.plugin_dir, "icon.png")))
         dialog.setMinimumWidth(400)
 
         layout = QVBoxLayout()
 
-        title = QLabel(self.tr("Choose which settings you want to reset:"))
+        title = QLabel(self.tr("Choose which settings you want to clean:"))
         title.setStyleSheet("font-weight: bold; font-size: 15px; margin-bottom: 10px;")
         layout.addWidget(title)
         layout.addSpacing(10)
@@ -142,18 +146,20 @@ class QGISSettingsCleaner(QObject):
             cb.setStyleSheet("font-size: 13px;")
             group_layout.addWidget(cb)
             checkboxes[name] = cb
-        
+
         group_box.setLayout(group_layout)
         layout.addWidget(group_box)
         layout.addSpacing(20)
 
-        btn_reset_selected = QPushButton(self.tr("Reset Selected Settings"))
+        btn_reset_selected = QPushButton(self.tr("Clean Selected Settings"))
         btn_reset_selected.setStyleSheet("""
             background-color: #f0f0f0;
             padding: 8px;
             font-size: 13px;
         """)
-        btn_reset_selected.clicked.connect(lambda: self.perform_cleanup(dialog, checkboxes))
+        btn_reset_selected.clicked.connect(
+            lambda: self.perform_cleanup(dialog, checkboxes)
+        )
         layout.addWidget(btn_reset_selected, alignment=Qt.AlignCenter)
 
         layout.addSpacing(15)
@@ -165,7 +171,7 @@ class QGISSettingsCleaner(QObject):
 
         layout.addSpacing(15)
 
-        btn_reset_all = QPushButton(self.tr("Reset All Settings (Full Reset)"))
+        btn_reset_all = QPushButton(self.tr("Clean All Settings (Full Clean)"))
         btn_reset_all.setStyleSheet("""
             background-color: #dc3545;
             color: white;
@@ -177,31 +183,35 @@ class QGISSettingsCleaner(QObject):
         layout.addWidget(btn_reset_all, alignment=Qt.AlignCenter)
 
         disclaimer = QLabel(
-        self.tr("Note: The first button removes only the selected configuration categories.\n\n"
-                "The second button removes *all* QGIS settings, including additional internal preferences.")
+            self.tr(
+                "Note: The first button removes only the selected configuration categories.\n\n"
+                "The second button removes all QGIS settings, including additional internal preferences."
+            )
         )
         disclaimer.setWordWrap(True)
         disclaimer.setStyleSheet("font-size: 12px; color: #222222; margin-top: 10px;")
         layout.addWidget(disclaimer, alignment=Qt.AlignCenter)
 
-        layout.addSpacerItem(QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addSpacerItem(
+            QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        )
 
         dialog.setLayout(layout)
         dialog.exec_()
 
     def perform_cleanup(self, dialog, checkboxes):
         """
-        Resets selected QGIS settings based on checked categories.
+        Cleans selected QGIS settings based on checked categories.
 
         Removes settings by prefix and clears custom CRS if selected.
         Prompts user confirmation and restart after cleanup.
         """
-        
+
         confirm = QMessageBox.question(
             dialog,
-            self.tr("Confirm Deletion"),
-            self.tr("Are you sure you want to reset the selected QGIS settings?"),
-            QMessageBox.Yes | QMessageBox.No
+            self.tr("Confirm"),
+            self.tr("Are you sure you want to clean the selected QGIS settings?"),
+            QMessageBox.Yes | QMessageBox.No,
         )
         if confirm != QMessageBox.Yes:
             return
@@ -217,9 +227,10 @@ class QGISSettingsCleaner(QObject):
         QMessageBox.information(
             dialog,
             self.tr("Done"),
-            self.tr("Selected settings have been reset. Please restart QGIS."))
+            self.tr("Selected settings have been cleared. Please restart QGIS."),
+        )
 
-        self.prompt_restart_qgis()
+        self.dialog_close_qgis(True)
 
     def dialog_confirm(self, msg):
         res = QMessageBox.question(
@@ -230,82 +241,82 @@ class QGISSettingsCleaner(QObject):
         )
         return res == QMessageBox.Yes
 
-    def dialog_restart_qgis(self):
+    def dialog_close_qgis(self, success):
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        msg.setText(self.tr("Operation completed successfully."))
-        msg.setInformativeText(self.tr(
-            "Click OK to close QGIS now. You must restart the application manually afterward."
-        ))
-        msg.setWindowTitle(self.tr("Restart QGIS"))
+        msg.setIcon(QMessageBox.Information if success else QMessageBox.Warning)
+        msg.setStandardButtons(QMessageBox.Close | QMessageBox.Cancel)
+
+        if success:
+            msg.setText(self.tr("Settings cleared successfully."))
+        else:
+            msg.setText(self.tr("Some files could not be deleted."))
+
+        if success:
+            msg.setInformativeText(
+                self.tr(
+                    "Click Close to exit QGIS. You will need to reopen it manually."
+                )
+            )
+        else:
+            msg.setInformativeText(
+                self.tr(
+                    "Close QGIS and manually delete the remaining configuration files."
+                )
+            )
+
+        msg.setWindowTitle(self.tr("Close QGIS"))
         btn = msg.exec_()
 
-        if btn == QMessageBox.Ok:
-            iface.actionExit().trigger()
-
-    def prompt_restart_qgis(self):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        msg.setText(self.tr("Operation completed successfully."))
-        msg.setInformativeText(self.tr(
-            "Click OK to close QGIS now. You must restart the application manually afterward."
-        ))
-        msg.setWindowTitle(self.tr("Restart QGIS"))
-        btn = msg.exec_()
-
-        if btn == QMessageBox.Ok:
+        if btn == QMessageBox.Close:
             iface.actionExit().trigger()
 
     def reset_qgis(self):
-        plugin_text = QTextBrowser()
         msg = self.tr(
-            """Are you sure you want to delete all QGIS settings? The following will be removed:
+            """Are you sure you want to clear all QGIS settings? The following will be removed:
 
 - Language settings
 - Proxy settings
-- CRS and coordinate system settings
+- CRS (Coordinate Reference System) settings
 - Database connection settings
 - WFS and WMS service settings
-- XYZ tile service settings
+- XYZ tile settings
 - ALL other QGIS settings on this machine
 
-This operation cannot be undone. Do you want to continue?"""
+This action is irreversible. Do you want to continue?"""
         )
 
         if not self.dialog_confirm(msg):
-            plugin_text.append(self.tr("The operation was cancelled by the user."))
+            QgsMessageLog.logMessage(
+                self.tr("Operation cancelled by the user."), TAG, Qgis.Info
+            )
             return
 
         fp = os.path.realpath(QgsApplication.qgisUserDatabaseFilePath())
         problem_files = []
 
-        plugin_text.append(self.tr(
-            "Removing QGIS settings stored in the Windows registry or ~/.config directory on Linux."
-        ))
+        QgsMessageLog.logMessage(
+            self.tr("Clearing QGIS settings stored in the system configuration."),
+            TAG,
+            Qgis.Info,
+        )
 
         s = QSettings()
         s.clear()
 
         def errorfunc(x, y, z):
-            plugin_text.append(self.tr("Error deleting: ") + y)
+            QgsMessageLog.logMessage(self.tr("Error deleting: ") + y, TAG, Qgis.Warning)
             problem_files.append(y)
 
         if os.path.isfile(fp):
             rp = fp.rsplit(os.sep, 1)[0]
-            plugin_text.append(self.tr("Deleting QGIS user configuration folder: ") + rp)
+            QgsMessageLog.logMessage(
+                self.tr("Deleting QGIS user configuration folder: ") + rp,
+                TAG,
+                Qgis.Info,
+            )
             shutil.rmtree(rp, ignore_errors=False, onerror=errorfunc)
 
-            if len(problem_files) == 0:
-                plugin_text.append(self.tr("Settings deleted. Please restart QGIS."))
-            else:
-                plugin_text.append(
-                    self.tr("Some files could not be deleted. Close QGIS and delete the folder manually: ")
-                    + rp
-                )
-
-        self.dialog_restart_qgis()
+        self.dialog_close_qgis(len(problem_files) == 0)
 
     def remove_custom_qgis_crs(self):
         """

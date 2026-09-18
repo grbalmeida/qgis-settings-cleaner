@@ -79,6 +79,24 @@ The plugin supports QGIS 3.34+ (Qt 5 / PyQt5) and QGIS 4 (Qt 6 / PyQt6) from the
 - Dialogs use `exec()`, not `exec_()`.
 - The icon is read from disk; there is no `resources.qrc` (the `pyrcc5` output imports PyQt5).
 
+## Tests
+
+`test/test_clean.py` runs the plugin inside the QGIS Python, without a QGIS window, on a
+throwaway profile. With the QGIS 4 Flatpak, from the repository root:
+
+```bash
+flatpak run --filesystem="$PWD:ro" --filesystem=/tmp --command=python3 org.qgis.qgis -c \
+  "import sys; sys.path.insert(0, '/app/share/qgis/python'); sys.path.insert(0, 'test'); \
+   import unittest; unittest.main(module=None, argv=['t', 'discover', '-s', 'test'])"
+```
+
+On QGIS 3 LTR, with the official container image:
+
+```bash
+podman run --rm -v "$PWD:/repo:ro" -w /repo -e QT_QPA_PLATFORM=offscreen \
+  docker.io/qgis/qgis:ltr python3 -m unittest discover -s test
+```
+
 ## License
 
 Copyright (C) 2025-2026 SEGEO/DITEC/PF. This program is licensed under the GNU GPL v2 or any

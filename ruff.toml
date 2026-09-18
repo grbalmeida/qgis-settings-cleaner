@@ -1,0 +1,12 @@
+line-length = 88
+target-version = "py39"
+
+[lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "TID251"]
+ignore = ["E501"]
+
+# The plugin must import Qt through qgis.PyQt to run on QGIS 3 (PyQt5) and 4 (PyQt6).
+[lint.flake8-tidy-imports.banned-api]
+"PyQt5".msg = "Import through qgis.PyQt: QGIS 4 only ships PyQt6."
+"PyQt6".msg = "Import through qgis.PyQt: QGIS 3 only ships PyQt5."
+"sip".msg = "Use qgis.PyQt.sip."

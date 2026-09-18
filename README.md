@@ -1,7 +1,7 @@
 # QGIS Settings Cleaner
 
-A small QGIS plugin that **resets QGIS to a fresh state**: it empties the active user profile
-and closes QGIS, so the next start begins from scratch.
+A small QGIS plugin that **resets QGIS to a fresh state**: it deletes everything in the active
+user profile and closes QGIS, so the next start begins from scratch.
 
 Runs on QGIS 3.34+ and QGIS 4.
 
@@ -13,17 +13,20 @@ spatial bookmarks, Processing models and scripts. The plugin deletes everything 
 — this plugin included — and closes QGIS. Project files and data are not touched — only the
 profile.
 
-When QGIS closes it writes its window layout and an empty bookmark list back, so the folder is
-left with only those; everything else starts from the defaults.
+When QGIS closes it writes a few things back (window layout, an empty bookmark list, the Python
+console history), so the folder is left with only those; everything else starts from the defaults.
 
 ## Usage
 
-1. In QGIS, open **Plugins → QGIS Settings Cleaner → Delete User Profile and Close QGIS...**
+1. In QGIS, open **Plugins → QGIS Settings Cleaner → Reset User Profile and Close QGIS...**
 2. Read the confirmation: it shows the folder that will be emptied and what is in it.
-   **Cancel** is the default; click **Delete Profile and Close QGIS** to go ahead.
+   **Cancel** is the default; click **Reset Profile and Close QGIS** to go ahead.
 3. If the current project has unsaved changes, QGIS asks whether to save it. Cancelling there
-   cancels the cleanup too; nothing has been deleted yet.
+   cancels the reset too; nothing has been deleted yet.
 4. QGIS closes. Open it again to start with a fresh profile.
+
+While tasks run in the background (a long export, a plugin install), the plugin refuses with a
+message and deletes nothing: QGIS would not close with them running.
 
 If some files could not be deleted (QGIS may still have them open), the plugin says so and
 shows the folder to clean by hand before opening QGIS again; **Show Details** lists the files.
@@ -82,6 +85,10 @@ The plugin supports QGIS 3.34+ (Qt 5 / PyQt5) and QGIS 4 (Qt 6 / PyQt6) from the
 - Enums use the scoped form (`QMessageBox.StandardButton.Cancel`), the only one PyQt6 has.
 - Dialogs use `exec()`, not `exec_()`.
 - The icon is read from disk; there is no `resources.qrc` (the `pyrcc5` output imports PyQt5).
+
+One difference remains: on QGIS 3, an unsaved script in the Python console editor is only asked
+about when QGIS exits, after the profile was emptied; cancelling there leaves QGIS open on the
+empty profile. QGIS 4 asks before, together with the project.
 
 ## Tests
 

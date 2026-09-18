@@ -10,9 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Selective cleanup by category was removed** (issue #1). It matched setting keys by prefix, and the prefixes drift between QGIS releases (QGIS 4 moved the GeoPackage connections, for one), so the plugin reported success without cleaning everything. QGIS covers that case natively: remove a connection from the Browser panel, change an option in **Settings → Options**, or start fresh with **Settings → User Profiles → New Profile**.
-- The plugin now does one thing: empties the active user profile and closes QGIS. The menu entry is **Delete User Profile and Close QGIS...**.
+- The plugin now does one thing: resets the active user profile and closes QGIS. The menu entry is **Reset User Profile and Close QGIS...**.
 - The confirmation dialog shows the folder that will be emptied and lists what is in it (settings, saved passwords, plugins — this one included —, styles, bookmarks, Processing models). **Cancel** is the default button; Enter no longer confirms the deletion.
-- The current project is closed before anything is deleted, so QGIS asks about unsaved changes first and cancelling there keeps the profile. Before, the profile was already gone when QGIS asked, and cancelling left QGIS running without one.
+- The current project is closed before anything is deleted, so QGIS asks about unsaved changes first and cancelling there keeps the profile. Before, the profile was already gone when QGIS asked, and cancelling left QGIS running without one. For the same reason the plugin refuses to run while background tasks are active.
 - After a successful cleanup QGIS closes right away, without a second dialog. When some files could not be deleted, the message shows the folder to clean by hand and lists the files under **Show Details**.
 - The toolbar button was removed; the plugin lives in **Plugins → QGIS Settings Cleaner**.
 - All messages are translated to Portuguese, with the words QGIS itself uses (perfil, complementos, favoritos espaciais), and the compiled `.qm` is versioned so a clone of the repository works as is.

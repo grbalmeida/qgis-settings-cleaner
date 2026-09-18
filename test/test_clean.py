@@ -8,6 +8,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -16,7 +17,7 @@ CONFIG_ROOT = tempfile.mkdtemp(prefix="qgis-settings-cleaner-test-")
 os.environ["QGIS_CUSTOM_CONFIG_PATH"] = CONFIG_ROOT
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from qgis.core import QgsApplication  # noqa: E402
+from qgis.core import QgsApplication, QgsTask  # noqa: E402
 from qgis.PyQt.QtCore import QObject, QSettings  # noqa: E402
 from qgis.PyQt.QtWidgets import QAction, QMainWindow, QMessageBox  # noqa: E402
 
@@ -92,8 +93,32 @@ class CleanTest(unittest.TestCase):
     def test_portuguese_translation_is_loaded(self):
         self.assertEqual(
             self.plugin.action.text(),
-            "Excluir o Perfil de Usuário e Fechar o QGIS...",
+            "Redefinir o Perfil de Usuário e Fechar o QGIS...",
         )
+
+    def run_task(self, flags):
+        task = QgsTask.fromFunction("busy", lambda task: time.sleep(0.5), flags=flags)
+        QgsApplication.taskManager().addTask(task)
+        self.addCleanup(task.waitForFinished)
+
+    def test_running_tasks_stop_it_before_the_confirmation(self):
+        self.run_task(QgsTask.Flag.CanCancel)
+        warned = []
+        self.plugin.confirm = lambda profile: self.fail("asked to confirm")
+        self.plugin.warn = lambda text, informative, details="": warned.append(text)
+        self.plugin.clean_settings()
+        self.assertEqual(
+            warned, ["O QGIS ainda está executando tarefas em segundo plano."]
+        )
+        self.assertEqual(sorted(os.listdir(self.profile)), self.before)
+        self.assertEqual(self.iface.events, [])
+
+    def test_tasks_qgis_cancels_by_itself_do_not_stop_it(self):
+        self.run_task(QgsTask.Flag.CancelWithoutPrompt)
+        self.plugin.warn = lambda *args: self.fail("refused")
+        self.plugin.confirm = lambda profile: True
+        self.plugin.clean_settings()
+        self.assertEqual(self.iface.events[-1], ("exit", []))
 
     def test_cancel_keeps_everything(self):
         self.plugin.confirm = lambda profile: False
@@ -132,40 +157,56 @@ class CleanTest(unittest.TestCase):
         self.assertEqual(self.iface.events[-1], ("exit", []))
 
     def test_leftovers_are_reported_and_qgis_still_closes(self):
-        # Stands in for a file QGIS still has open.
+        # Stand-ins for a file and a folder QGIS still has open.
         busy = os.path.join(self.profile, "busy.db")
         with open(busy, "w") as f:
             f.write("x")
-        real_unlink = os.unlink
+        held = os.path.join(self.profile, "python")
+        real_unlink, real_rmdir = os.unlink, os.rmdir
 
         def unlink(path, *args, **kwargs):
             if os.path.basename(path) == "busy.db":
                 raise PermissionError(13, "in use", path)
             return real_unlink(path, *args, **kwargs)
 
+        def rmdir(path, *args, **kwargs):
+            if path == held:
+                raise PermissionError(13, "held", path)
+            return real_rmdir(path, *args, **kwargs)
+
         warned = []
         self.plugin.confirm = lambda profile: True
         self.plugin.warn_leftovers = lambda profile, leftovers: warned.append(
-            (profile, leftovers)
+            (profile, sorted(leftovers))
         )
-        with mock.patch("os.unlink", unlink):
+        with mock.patch("os.unlink", unlink), mock.patch("os.rmdir", rmdir):
             self.plugin.clean_settings()
 
-        reason = str(PermissionError(13, "in use", busy))
-        self.assertEqual(warned, [(self.profile, [(busy, reason)])])
-        self.assertEqual(self.iface.events[-1], ("exit", ["busy.db"]))
+        self.assertEqual(warned, [(self.profile, [(busy, "in use"), (held, "held")])])
+        self.assertEqual(self.iface.events[-1], ("exit", ["busy.db", "python"]))
 
-    def test_confirm_dialog_defaults_to_cancel(self):
-        shown = []
-        QMessageBox.exec = lambda box: shown.append(box)
+    def test_confirm_answers_as_the_buttons_say(self):
+        boxes = []
+
+        def press(role):
+            def exec_(box):
+                boxes.append(box)
+                [button] = [b for b in box.buttons() if box.buttonRole(b) == role]
+                button.click()
+                return 0
+
+            return exec_
+
         self.addCleanup(delattr, QMessageBox, "exec")
-
+        QMessageBox.exec = press(QMessageBox.ButtonRole.RejectRole)
         self.assertFalse(self.plugin.confirm(self.profile))
-        box = shown[0]
-        cancel = box.defaultButton()
-        self.assertEqual(box.buttonRole(cancel), QMessageBox.ButtonRole.RejectRole)
-        roles = {box.buttonRole(b) for b in box.buttons()}
-        self.assertIn(QMessageBox.ButtonRole.DestructiveRole, roles)
+        QMessageBox.exec = press(QMessageBox.ButtonRole.DestructiveRole)
+        self.assertTrue(self.plugin.confirm(self.profile))
+
+        box = boxes[0]
+        self.assertEqual(
+            box.buttonRole(box.defaultButton()), QMessageBox.ButtonRole.RejectRole
+        )
         self.assertIn(self.profile, box.informativeText())
 
     def test_leftovers_dialog_lists_the_files(self):

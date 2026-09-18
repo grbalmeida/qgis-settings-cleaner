@@ -1,4 +1,4 @@
-"""QGIS Settings Cleaner: empties the active QGIS user profile and closes QGIS.
+"""QGIS Settings Cleaner: resets the active QGIS user profile and closes QGIS.
 
 Copyright (C) 2025-2026 SEGEO/DITEC/PF
 Author: Gilvan Ribeiro de Almeida
@@ -12,7 +12,7 @@ version.
 import os
 import shutil
 
-from qgis.core import QgsApplication
+from qgis.core import QgsApplication, QgsTask
 from qgis.PyQt.QtCore import QCoreApplication, QObject, QSettings, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
@@ -42,7 +42,7 @@ class QGISSettingsCleaner(QObject):
     def initGui(self):
         self.action = QAction(
             QIcon(os.path.join(self.plugin_dir, "icon.png")),
-            self.tr("Delete User Profile and Close QGIS..."),
+            self.tr("Reset User Profile and Close QGIS..."),
             self.iface.mainWindow(),
         )
         self.action.triggered.connect(self.clean_settings)
@@ -60,8 +60,21 @@ class QGISSettingsCleaner(QObject):
         return os.path.normpath(QgsApplication.qgisSettingsDirPath())
 
     def clean_settings(self):
-        profile = self.profile_path()
+        # QGIS refuses to exit while such tasks run, so it would stay open on
+        # an emptied profile; refusing here keeps everything in place. (Tasks
+        # flagged CancelWithoutPrompt, like the news feed, QGIS cancels itself.)
+        tasks = QgsApplication.taskManager().activeTasks()
+        if any(not (task.flags() & QgsTask.Flag.CancelWithoutPrompt) for task in tasks):
+            self.warn(
+                self.tr("QGIS is still running tasks in the background."),
+                self.tr(
+                    "Wait for them to finish, or cancel them in the status bar, "
+                    "and try again. Nothing was deleted."
+                ),
+            )
+            return
 
+        profile = self.profile_path()
         if not self.confirm(profile):
             return
 
@@ -81,7 +94,7 @@ class QGISSettingsCleaner(QObject):
         box = QMessageBox(self.iface.mainWindow())
         box.setWindowTitle(NAME)
         box.setIcon(QMessageBox.Icon.Warning)
-        box.setText(self.tr("Delete the active QGIS user profile and close QGIS?"))
+        box.setText(self.tr("Reset the active QGIS user profile and close QGIS?"))
         box.setInformativeText(
             self.tr(
                 "Everything in this folder will be deleted:\n{}\n\n"
@@ -95,14 +108,14 @@ class QGISSettingsCleaner(QObject):
                 "profile. This cannot be undone."
             ).format(profile)
         )
-        delete = box.addButton(
-            self.tr("Delete Profile and Close QGIS"),
+        reset = box.addButton(
+            self.tr("Reset Profile and Close QGIS"),
             QMessageBox.ButtonRole.DestructiveRole,
         )
         # Enter cancels; the wipe takes a deliberate click.
         box.setDefaultButton(box.addButton(QMessageBox.StandardButton.Cancel))
         box.exec()
-        return box.clickedButton() is delete
+        return box.clickedButton() is reset
 
     @staticmethod
     def empty_profile(profile):
@@ -115,10 +128,8 @@ class QGISSettingsCleaner(QObject):
         leftovers = []
 
         def on_error(function, path, exc_info):
-            leftovers.append((path, str(exc_info[1])))
+            leftovers.append((path, exc_info[1].strerror))
 
-        if not os.path.isdir(profile):
-            return leftovers
         for entry in os.scandir(profile):
             if entry.is_dir(follow_symlinks=False):
                 shutil.rmtree(entry.path, onerror=on_error)
@@ -126,23 +137,26 @@ class QGISSettingsCleaner(QObject):
                 try:
                     os.unlink(entry.path)
                 except OSError as error:
-                    leftovers.append((entry.path, str(error)))
+                    leftovers.append((entry.path, error.strerror))
 
         return leftovers
 
     def warn_leftovers(self, profile, leftovers):
-        box = QMessageBox(self.iface.mainWindow())
-        box.setWindowTitle(NAME)
-        box.setIcon(QMessageBox.Icon.Warning)
-        box.setText(self.tr("Some files could not be deleted."))
-        box.setInformativeText(
+        self.warn(
+            self.tr("Some files could not be deleted."),
             self.tr(
                 "They are probably still in use. QGIS will close now; before "
                 "opening it again, delete what is left in this folder by hand:\n{}\n\n"
                 "The files are listed under Show Details."
-            ).format(profile)
+            ).format(profile),
+            "\n".join(f"{path}: {reason}" for path, reason in leftovers),
         )
-        box.setDetailedText(
-            "\n".join(f"{path}: {reason}" for path, reason in leftovers)
-        )
+
+    def warn(self, text, informative, details=""):
+        box = QMessageBox(self.iface.mainWindow())
+        box.setWindowTitle(NAME)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setText(text)
+        box.setInformativeText(informative)
+        box.setDetailedText(details)
         box.exec()

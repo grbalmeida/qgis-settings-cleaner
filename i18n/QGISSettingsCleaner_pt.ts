@@ -4,27 +4,12 @@
 <context>
     <name>QGISSettingsCleaner</name>
     <message>
-        <location filename="../qgis_settings_cleaner.py" line="84"/>
-        <source>Delete the active QGIS user profile and close QGIS?</source>
-        <translation>Excluir o perfil de usuário ativo do QGIS e fechar o QGIS?</translation>
-    </message>
-    <message>
-        <location filename="../qgis_settings_cleaner.py" line="98"/>
-        <source>Delete Profile and Close QGIS</source>
-        <translation>Excluir Perfil e Fechar o QGIS</translation>
-    </message>
-    <message>
-        <location filename="../qgis_settings_cleaner.py" line="137"/>
+        <location filename="../qgis_settings_cleaner.py" line="143"/>
         <source>Some files could not be deleted.</source>
         <translation>Alguns arquivos não puderam ser excluídos.</translation>
     </message>
     <message>
-        <location filename="../qgis_settings_cleaner.py" line="43"/>
-        <source>Delete User Profile and Close QGIS...</source>
-        <translation>Excluir o Perfil de Usuário e Fechar o QGIS...</translation>
-    </message>
-    <message>
-        <location filename="../qgis_settings_cleaner.py" line="85"/>
+        <location filename="../qgis_settings_cleaner.py" line="96"/>
         <source>Everything in this folder will be deleted:
 {}
 
@@ -39,7 +24,7 @@ São todas as configurações do QGIS e tudo o mais guardado no perfil: conexõe
 Se o projeto atual tiver alterações não salvas, o QGIS pergunta se quer salvá-lo; depois o QGIS é fechado. Abra-o de novo para começar com um perfil novo. Esta ação não pode ser desfeita.</translation>
     </message>
     <message>
-        <location filename="../qgis_settings_cleaner.py" line="138"/>
+        <location filename="../qgis_settings_cleaner.py" line="143"/>
         <source>They are probably still in use. QGIS will close now; before opening it again, delete what is left in this folder by hand:
 {}
 
@@ -48,6 +33,31 @@ The files are listed under Show Details.</source>
 {}
 
 Os arquivos estão listados em Mostrar detalhes.</translation>
+    </message>
+    <message>
+        <location filename="../qgis_settings_cleaner.py" line="43"/>
+        <source>Reset User Profile and Close QGIS...</source>
+        <translation>Redefinir o Perfil de Usuário e Fechar o QGIS...</translation>
+    </message>
+    <message>
+        <location filename="../qgis_settings_cleaner.py" line="66"/>
+        <source>QGIS is still running tasks in the background.</source>
+        <translation>O QGIS ainda está executando tarefas em segundo plano.</translation>
+    </message>
+    <message>
+        <location filename="../qgis_settings_cleaner.py" line="66"/>
+        <source>Wait for them to finish, or cancel them in the status bar, and try again. Nothing was deleted.</source>
+        <translation>Espere que terminem, ou cancele-as na barra de status, e tente de novo. Nada foi excluído.</translation>
+    </message>
+    <message>
+        <location filename="../qgis_settings_cleaner.py" line="95"/>
+        <source>Reset the active QGIS user profile and close QGIS?</source>
+        <translation>Redefinir o perfil de usuário ativo do QGIS e fechar o QGIS?</translation>
+    </message>
+    <message>
+        <location filename="../qgis_settings_cleaner.py" line="109"/>
+        <source>Reset Profile and Close QGIS</source>
+        <translation>Redefinir Perfil e Fechar o QGIS</translation>
     </message>
 </context>
 </TS>

@@ -2,10 +2,10 @@
 name=QGIS Settings Cleaner
 qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
-description=Deletes the active QGIS user profile and closes QGIS, for a fresh restart.
-description[pt]=Exclui o perfil de usuário ativo do QGIS e fecha o QGIS, para um reinício limpo.
-about=This plugin resets QGIS by deleting the active user profile: every setting (language, proxy, CRS, connections, WMS/WFS and XYZ services) and everything else kept in the profile (saved passwords, installed plugins, user styles, bookmarks, Processing models and scripts). QGIS then closes and starts with a fresh profile next time. Useful for troubleshooting, training rooms and shared workstations. Project and data files are not touched.
-about[pt]=Este plugin restaura o QGIS excluindo o perfil de usuário ativo: todas as configurações (idioma, proxy, SRC, conexões, serviços WMS/WFS e XYZ) e tudo o mais guardado no perfil (senhas salvas, plugins instalados, estilos do usuário, marcadores espaciais, modelos e scripts do Processamento). O QGIS é fechado e abre com um perfil novo na próxima vez. Útil para resolver problemas, salas de treinamento e estações compartilhadas. Projetos e arquivos de dados não são alterados.
+description=Empties the active QGIS user profile and closes QGIS, for a fresh restart.
+description[pt]=Esvazia o perfil de usuário ativo do QGIS e fecha o QGIS, para um reinício limpo.
+about=This plugin deletes everything in the active user profile: every setting (language, proxy, CRS, connections, WMS/WFS and XYZ services) and everything else kept in the profile (saved passwords, installed plugins — this one included —, user styles, spatial bookmarks, Processing models and scripts). QGIS then closes and starts with a fresh profile next time. Useful for troubleshooting, training rooms and shared workstations. Project and data files are not touched.
+about[pt]=Este complemento exclui tudo o que há no perfil de usuário ativo: todas as configurações (idioma, proxy, SRC, conexões, serviços WMS/WFS e XYZ) e tudo o mais guardado no perfil (senhas salvas, complementos instalados — este inclusive —, estilos do usuário, favoritos espaciais, modelos e scripts do Processamento). O QGIS é fechado e abre com um perfil novo na próxima vez. Útil para resolver problemas, salas de treinamento e estações compartilhadas. Projetos e arquivos de dados não são alterados.
 version=2.0.0
 author=Gilvan Ribeiro de Almeida
 email=g.r.almeida@live.com
@@ -23,6 +23,7 @@ changelog=2.0.0
       - Runs on QGIS 4 (Qt 6) as well as QGIS 3.34+
       - Removed the selective cleanup by category (see issue #1)
       - The confirmation dialog says what is deleted and defaults to Cancel
+      - Unsaved changes are asked about before anything is deleted
       - Removed the toolbar button; the plugin lives in the Plugins menu only
       1.1.0
       - Selective cleanup by category

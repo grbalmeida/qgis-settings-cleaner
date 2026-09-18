@@ -4,64 +4,50 @@
 <context>
     <name>QGISSettingsCleaner</name>
     <message>
-        <source>QGIS Settings Cleaner</source>
-        <translation>Limpador de Configurações do QGIS</translation>
-    </message>
-    <message>
-        <source>Clean All Settings and Close QGIS...</source>
-        <translation>Limpar Todas as Configurações e Fechar o QGIS...</translation>
-    </message>
-    <message>
-        <source>Operation cancelled by the user.</source>
-        <translation>Operação cancelada pelo usuário.</translation>
-    </message>
-    <message>
-        <source>Clean QGIS Settings</source>
-        <translation>Limpar Configurações do QGIS</translation>
-    </message>
-    <message>
+        <location filename="../qgis_settings_cleaner.py" line="84"/>
         <source>Delete the active QGIS user profile and close QGIS?</source>
         <translation>Excluir o perfil de usuário ativo do QGIS e fechar o QGIS?</translation>
     </message>
     <message>
-        <source>The profile folder will be deleted:
-{}
-
-This removes every QGIS setting and everything else kept in the profile: data source connections and saved passwords, installed plugins, user styles, bookmarks, and Processing models and scripts. Your project and data files are not affected.
-
-QGIS will close. Open it again to start with a fresh profile. This cannot be undone.</source>
-        <translation>A pasta do perfil será excluída:
-{}
-
-Isso remove todas as configurações do QGIS e tudo o mais guardado no perfil: conexões com fontes de dados e senhas salvas, plugins instalados, estilos do usuário, marcadores espaciais e modelos e scripts do Processamento. Seus projetos e arquivos de dados não são afetados.
-
-O QGIS será fechado. Abra-o de novo para começar com um perfil novo. Esta ação não pode ser desfeita.</translation>
-    </message>
-    <message>
+        <location filename="../qgis_settings_cleaner.py" line="98"/>
         <source>Delete Profile and Close QGIS</source>
         <translation>Excluir Perfil e Fechar o QGIS</translation>
     </message>
     <message>
-        <source>Could not delete: </source>
-        <translation>Não foi possível excluir: </translation>
-    </message>
-    <message>
-        <source>Deleting the QGIS user profile: </source>
-        <translation>Excluindo o perfil de usuário do QGIS: </translation>
-    </message>
-    <message>
+        <location filename="../qgis_settings_cleaner.py" line="137"/>
         <source>Some files could not be deleted.</source>
         <translation>Alguns arquivos não puderam ser excluídos.</translation>
     </message>
     <message>
-        <source>They are probably still open by QGIS. QGIS will close now; delete this folder by hand before opening QGIS again:
+        <location filename="../qgis_settings_cleaner.py" line="43"/>
+        <source>Delete User Profile and Close QGIS...</source>
+        <translation>Excluir o Perfil de Usuário e Fechar o QGIS...</translation>
+    </message>
+    <message>
+        <location filename="../qgis_settings_cleaner.py" line="85"/>
+        <source>Everything in this folder will be deleted:
 {}
 
-The files are listed in the QGIS log, under "{}".</source>
-        <translation>Provavelmente ainda estão abertos pelo QGIS. O QGIS será fechado agora; exclua esta pasta manualmente antes de abrir o QGIS de novo:
+That is every QGIS setting and everything else kept in the profile: data source connections and saved passwords, installed plugins (this one included), user styles, spatial bookmarks, and Processing models and scripts. Project and data files are not affected.
+
+If the current project has unsaved changes, QGIS asks whether to save it; then QGIS closes. Open it again to start with a fresh profile. This cannot be undone.</source>
+        <translation>Tudo nesta pasta será excluído:
 {}
 
-Os arquivos estão listados no log do QGIS, na aba "{}".</translation>
+São todas as configurações do QGIS e tudo o mais guardado no perfil: conexões com fontes de dados e senhas salvas, complementos instalados (este inclusive), estilos do usuário, favoritos espaciais e modelos e scripts do Processamento. Projetos e arquivos de dados não são afetados.
+
+Se o projeto atual tiver alterações não salvas, o QGIS pergunta se quer salvá-lo; depois o QGIS é fechado. Abra-o de novo para começar com um perfil novo. Esta ação não pode ser desfeita.</translation>
+    </message>
+    <message>
+        <location filename="../qgis_settings_cleaner.py" line="138"/>
+        <source>They are probably still in use. QGIS will close now; before opening it again, delete what is left in this folder by hand:
+{}
+
+The files are listed under Show Details.</source>
+        <translation>Provavelmente ainda estão em uso. O QGIS será fechado agora; antes de abri-lo de novo, exclua manualmente o que sobrou nesta pasta:
+{}
+
+Os arquivos estão listados em Mostrar detalhes.</translation>
     </message>
 </context>
 </TS>

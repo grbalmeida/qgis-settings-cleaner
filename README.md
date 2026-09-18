@@ -1,6 +1,6 @@
 # QGIS Settings Cleaner
 
-A small QGIS plugin that **resets QGIS to a fresh state**: it deletes the active user profile
+A small QGIS plugin that **resets QGIS to a fresh state**: it empties the active user profile
 and closes QGIS, so the next start begins from scratch.
 
 Runs on QGIS 3.34+ and QGIS 4.
@@ -9,22 +9,24 @@ Runs on QGIS 3.34+ and QGIS 4.
 
 QGIS keeps everything about *your* QGIS in a user profile folder: settings (language, proxy,
 CRS, ...), data source connections and their saved passwords, installed plugins, user styles,
-spatial bookmarks, Processing models and scripts. The plugin deletes that whole folder and
-closes QGIS. Project files and data are not touched — only the profile.
+spatial bookmarks, Processing models and scripts. The plugin deletes everything in that folder
+— this plugin included — and closes QGIS. Project files and data are not touched — only the
+profile.
 
-When QGIS closes it writes its window layout back, so the profile folder reappears with only
-that in it; everything else starts from the defaults.
+When QGIS closes it writes its window layout and an empty bookmark list back, so the folder is
+left with only those; everything else starts from the defaults.
 
 ## Usage
 
-1. In QGIS, open **Plugins → QGIS Settings Cleaner → Clean All Settings and Close QGIS...**
-2. Read the confirmation: it shows the folder that will be deleted and what is in it.
+1. In QGIS, open **Plugins → QGIS Settings Cleaner → Delete User Profile and Close QGIS...**
+2. Read the confirmation: it shows the folder that will be emptied and what is in it.
    **Cancel** is the default; click **Delete Profile and Close QGIS** to go ahead.
-3. QGIS closes. Open it again to start with a fresh profile.
+3. If the current project has unsaved changes, QGIS asks whether to save it. Cancelling there
+   cancels the cleanup too; nothing has been deleted yet.
+4. QGIS closes. Open it again to start with a fresh profile.
 
-If some files could not be deleted (on Windows, QGIS keeps a few databases open), the plugin
-says so and shows the folder to delete by hand before opening QGIS again. The files are listed
-in the QGIS log, under "QGIS Settings Cleaner".
+If some files could not be deleted (QGIS may still have them open), the plugin says so and
+shows the folder to clean by hand before opening QGIS again; **Show Details** lists the files.
 
 ⚠️ There is no undo. If you only want to remove some connections or change one option, use
 QGIS itself: right-click the connection in the Browser panel, or **Settings → Options**. To
@@ -53,9 +55,9 @@ From the [QGIS Plugin Repository](https://plugins.qgis.org/plugins/qgis_settings
 
 ## Translations
 
-The interface is in English and Portuguese (`i18n/QGISSettingsCleaner_pt.ts`); QGIS picks the
-language from its own locale setting. The compiled `.qm` is versioned so that a clone works as
-is. After changing a string in the code, refresh the `.ts` and recompile:
+The interface is in English and Portuguese (`i18n/QGISSettingsCleaner_pt.ts`), following the
+QGIS locale setting. The compiled `.qm` is versioned so that a clone works as is. After changing
+a string in the code, refresh the `.ts`, fill in the new translations and recompile:
 
 ```bash
 pylupdate5 -noobsolete qgis_settings_cleaner.py -ts i18n/QGISSettingsCleaner_pt.ts
@@ -67,7 +69,9 @@ Both tools come with Qt 5 (`pyqt5-dev-tools` and `qttools5-dev-tools` on Debian/
 repository root:
 
 ```bash
-podman run --rm -v "$PWD:/repo" -w /repo docker.io/qgis/qgis:ltr lrelease i18n/QGISSettingsCleaner_pt.ts
+podman run --rm -v "$PWD:/repo" -w /repo docker.io/qgis/qgis:ltr sh -c \
+  "pylupdate5 -noobsolete qgis_settings_cleaner.py -ts i18n/QGISSettingsCleaner_pt.ts && \
+   lrelease i18n/QGISSettingsCleaner_pt.ts"
 ```
 
 ## Compatibility

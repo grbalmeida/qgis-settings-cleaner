@@ -1,4 +1,4 @@
-"""QGIS Settings Cleaner: deletes the active QGIS user profile and closes QGIS.
+"""QGIS Settings Cleaner: empties the active QGIS user profile and closes QGIS.
 
 Copyright (C) 2025-2026 SEGEO/DITEC/PF
 Author: Gilvan Ribeiro de Almeida
@@ -12,12 +12,12 @@ version.
 import os
 import shutil
 
-from qgis.core import Qgis, QgsApplication, QgsMessageLog
+from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import QCoreApplication, QObject, QSettings, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
 
-TAG = "QGIS Settings Cleaner"
+NAME = "QGIS Settings Cleaner"
 
 
 class QGISSettingsCleaner(QObject):
@@ -25,45 +25,37 @@ class QGISSettingsCleaner(QObject):
         super().__init__()
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
-        self.translator = None
         self.action = None
+        # Kept as an attribute: Qt only borrows the translator, and a dropped
+        # reference would garbage-collect it.
+        self.translator = QTranslator()
         self.load_translation()
 
     def load_translation(self):
-        """Installs the plugin translation for the QGIS locale, when there is one."""
-
-        locale = QSettings().value("locale/userLocale", "en")
-        base_locale = locale.split("_")[0]
-
-        filename = f"QGISSettingsCleaner_{base_locale}.qm"
-        i18n_path = os.path.join(self.plugin_dir, "i18n", filename)
-
-        if os.path.exists(i18n_path):
-            self.translator = QTranslator()
-            if self.translator.load(i18n_path):
-                QCoreApplication.installTranslator(self.translator)
-
-    def menu_title(self):
-        return "&" + self.tr("QGIS Settings Cleaner")
+        language = QSettings().value("locale/userLocale", "en").split("_")[0]
+        filename = os.path.join(
+            self.plugin_dir, "i18n", f"QGISSettingsCleaner_{language}.qm"
+        )
+        if self.translator.load(filename):
+            QCoreApplication.installTranslator(self.translator)
 
     def initGui(self):
-        icon = QIcon(os.path.join(self.plugin_dir, "icon.png"))
         self.action = QAction(
-            icon,
-            self.tr("Clean All Settings and Close QGIS..."),
+            QIcon(os.path.join(self.plugin_dir, "icon.png")),
+            self.tr("Delete User Profile and Close QGIS..."),
             self.iface.mainWindow(),
         )
         self.action.triggered.connect(self.clean_settings)
         # Menu only: a one-click wipe does not belong on the toolbar.
-        self.iface.addPluginToMenu(self.menu_title(), self.action)
+        self.iface.addPluginToMenu("&" + NAME, self.action)
 
     def unload(self):
-        self.iface.removePluginMenu(self.menu_title(), self.action)
-        self.action = None
+        self.iface.removePluginMenu("&" + NAME, self.action)
+        QCoreApplication.removeTranslator(self.translator)
 
     @staticmethod
     def profile_path():
-        """Folder of the active user profile (QGIS3.ini, qgis.db, plugins, ...)."""
+        """Folder of the active user profile, without the trailing separator QGIS adds."""
 
         return os.path.normpath(QgsApplication.qgisSettingsDirPath())
 
@@ -71,84 +63,86 @@ class QGISSettingsCleaner(QObject):
         profile = self.profile_path()
 
         if not self.confirm(profile):
-            QgsMessageLog.logMessage(
-                self.tr("Operation cancelled by the user."),
-                TAG,
-                Qgis.MessageLevel.Info,
-            )
             return
 
-        leftovers = self.delete_profile(profile)
+        # Closing the project first lets QGIS ask about unsaved changes while
+        # cancelling still saves everything; it also releases the files that
+        # open layers hold.
+        if not self.iface.newProject(True):
+            return
+
+        leftovers = self.empty_profile(profile)
         if leftovers:
-            self.warn_leftovers(profile)
+            self.warn_leftovers(profile, leftovers)
 
         self.iface.actionExit().trigger()
 
     def confirm(self, profile):
         box = QMessageBox(self.iface.mainWindow())
-        box.setWindowTitle(self.tr("Clean QGIS Settings"))
+        box.setWindowTitle(NAME)
         box.setIcon(QMessageBox.Icon.Warning)
         box.setText(self.tr("Delete the active QGIS user profile and close QGIS?"))
         box.setInformativeText(
             self.tr(
-                "The profile folder will be deleted:\n{}\n\n"
-                "This removes every QGIS setting and everything else kept in the "
+                "Everything in this folder will be deleted:\n{}\n\n"
+                "That is every QGIS setting and everything else kept in the "
                 "profile: data source connections and saved passwords, installed "
-                "plugins, user styles, bookmarks, and Processing models and scripts. "
-                "Your project and data files are not affected.\n\n"
-                "QGIS will close. Open it again to start with a fresh profile. "
-                "This cannot be undone."
+                "plugins (this one included), user styles, spatial bookmarks, and "
+                "Processing models and scripts. Project and data files are not "
+                "affected.\n\n"
+                "If the current project has unsaved changes, QGIS asks whether to "
+                "save it; then QGIS closes. Open it again to start with a fresh "
+                "profile. This cannot be undone."
             ).format(profile)
         )
         delete = box.addButton(
             self.tr("Delete Profile and Close QGIS"),
             QMessageBox.ButtonRole.DestructiveRole,
         )
-        cancel = box.addButton(QMessageBox.StandardButton.Cancel)
-        # Enter and Esc both cancel; the wipe takes a deliberate click.
-        box.setDefaultButton(cancel)
-        box.setEscapeButton(cancel)
+        # Enter cancels; the wipe takes a deliberate click.
+        box.setDefaultButton(box.addButton(QMessageBox.StandardButton.Cancel))
         box.exec()
         return box.clickedButton() is delete
 
-    def delete_profile(self, profile):
-        """Deletes the profile folder and returns the paths it could not remove."""
+    @staticmethod
+    def empty_profile(profile):
+        """Deletes what the profile folder holds; returns (path, reason) for what it could not.
+
+        The folder itself stays, so a profile that is a symbolic link keeps
+        pointing where it did.
+        """
 
         leftovers = []
 
         def on_error(function, path, exc_info):
-            QgsMessageLog.logMessage(
-                self.tr("Could not delete: ") + path, TAG, Qgis.MessageLevel.Warning
-            )
-            leftovers.append(path)
+            leftovers.append((path, str(exc_info[1])))
 
-        QgsMessageLog.logMessage(
-            self.tr("Deleting the QGIS user profile: ") + profile,
-            TAG,
-            Qgis.MessageLevel.Info,
-        )
-
-        # Also drop the in-memory copy, or QGIS writes the old values back on exit.
-        settings = QSettings()
-        settings.clear()
-        settings.sync()
-
-        if os.path.isdir(profile):
-            shutil.rmtree(profile, onerror=on_error)
+        if not os.path.isdir(profile):
+            return leftovers
+        for entry in os.scandir(profile):
+            if entry.is_dir(follow_symlinks=False):
+                shutil.rmtree(entry.path, onerror=on_error)
+            else:
+                try:
+                    os.unlink(entry.path)
+                except OSError as error:
+                    leftovers.append((entry.path, str(error)))
 
         return leftovers
 
-    def warn_leftovers(self, profile):
+    def warn_leftovers(self, profile, leftovers):
         box = QMessageBox(self.iface.mainWindow())
-        box.setWindowTitle(self.tr("Clean QGIS Settings"))
+        box.setWindowTitle(NAME)
         box.setIcon(QMessageBox.Icon.Warning)
         box.setText(self.tr("Some files could not be deleted."))
         box.setInformativeText(
             self.tr(
-                "They are probably still open by QGIS. QGIS will close now; "
-                "delete this folder by hand before opening QGIS again:\n{}\n\n"
-                'The files are listed in the QGIS log, under "{}".'
-            ).format(profile, TAG)
+                "They are probably still in use. QGIS will close now; before "
+                "opening it again, delete what is left in this folder by hand:\n{}\n\n"
+                "The files are listed under Show Details."
+            ).format(profile)
         )
-        box.setStandardButtons(QMessageBox.StandardButton.Ok)
+        box.setDetailedText(
+            "\n".join(f"{path}: {reason}" for path, reason in leftovers)
+        )
         box.exec()

@@ -9,22 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Selective cleanup by category was removed** (issue #1). It matched setting keys by prefix, and the prefixes drift between QGIS releases (GeoPackage connections and, on QGIS 3, CRS preferences were already missed), so the plugin reported success without cleaning everything. QGIS covers that case natively: remove a connection from the Browser panel, change an option in **Settings → Options**, or start fresh with **Settings → User Profiles → New Profile**.
-- The plugin now does one thing: deletes the active user profile and closes QGIS.
-- The confirmation dialog shows the folder that will be deleted and lists what is in it (settings, saved passwords, plugins, styles, bookmarks, Processing models). **Cancel** is the default button; Enter no longer confirms the deletion.
-- After a successful cleanup QGIS closes right away, without a second dialog. When some files could not be deleted, the message shows the folder to remove by hand.
+- **Selective cleanup by category was removed** (issue #1). It matched setting keys by prefix, and the prefixes drift between QGIS releases (QGIS 4 moved the GeoPackage connections, for one), so the plugin reported success without cleaning everything. QGIS covers that case natively: remove a connection from the Browser panel, change an option in **Settings → Options**, or start fresh with **Settings → User Profiles → New Profile**.
+- The plugin now does one thing: empties the active user profile and closes QGIS. The menu entry is **Delete User Profile and Close QGIS...**.
+- The confirmation dialog shows the folder that will be emptied and lists what is in it (settings, saved passwords, plugins — this one included —, styles, bookmarks, Processing models). **Cancel** is the default button; Enter no longer confirms the deletion.
+- The current project is closed before anything is deleted, so QGIS asks about unsaved changes first and cancelling there keeps the profile. Before, the profile was already gone when QGIS asked, and cancelling left QGIS running without one.
+- After a successful cleanup QGIS closes right away, without a second dialog. When some files could not be deleted, the message shows the folder to clean by hand and lists the files under **Show Details**.
 - The toolbar button was removed; the plugin lives in **Plugins → QGIS Settings Cleaner**.
-- All messages are translated to Portuguese, and the compiled `.qm` is versioned so a clone of the repository works as is.
+- All messages are translated to Portuguese, with the words QGIS itself uses (perfil, complementos, favoritos espaciais), and the compiled `.qm` is versioned so a clone of the repository works as is.
 
 ### Added
 
 - QGIS 4 (Qt 6 / PyQt6) support, keeping QGIS 3.34+: `qgis.PyQt` imports, scoped enums, `exec()`, `qgisMaximumVersion=4.99`.
 - A test suite that runs on the QGIS Python of both versions (see README, "Tests").
-- `changelog` in `metadata.txt`, so the plugin page shows the history.
 
 ### Removed
 
-- `resources.qrc` and the `resources_rc.py` import: the icon is read from disk, and the generated file imported PyQt5 and was not versioned, so a clone did not load.
+- `resources.qrc`: the icon is read from disk. The generated `resources_rc.py` imported PyQt5 and was not versioned, so a clone did not load.
 
 ## [1.1.0] - 2026-02-27
 

@@ -1,80 +1,88 @@
 # QGIS Settings Cleaner
 
-A simple QGIS plugin that allows users to **clear QGIS settings for a fresh start** in just a few steps.
+A small QGIS plugin that **resets QGIS to a fresh state**: it deletes the active user profile
+and closes QGIS, so the next start begins from scratch.
 
-## Features
+Runs on QGIS 3.34+ and QGIS 4.
 
-- Selective or full cleanup: choose individual categories or clean everything at once
-  - Language configuration
-  - Proxy settings
-  - CRS (Coordinate Reference System) preferences
-  - Database connection settings
-  - WFS/WMS and XYZ tile services
-  - Any other user-modified settings
-- Works across platforms (Linux, Windows, macOS)
-- Supports multiple languages (English, Portuguese - Brazil)
-- Requires confirmation before performing any irreversible action
-- Closes QGIS after cleanup for a fresh restart
+## What it does
 
-## Why use this plugin?
+QGIS keeps everything about *your* QGIS in a user profile folder: settings (language, proxy,
+CRS, ...), data source connections and their saved passwords, installed plugins, user styles,
+spatial bookmarks, Processing models and scripts. The plugin deletes that whole folder and
+closes QGIS. Project files and data are not touched — only the profile.
 
-Sometimes QGIS settings become corrupted or overly complex due to extensive customization. This plugin offers a **quick and safe way to clean everything** and start fresh, which is especially useful for:
-
-- Troubleshooting
-- Testing new versions
-- Training environments
-- Shared workstations
+When QGIS closes it writes its window layout back, so the profile folder reappears with only
+that in it; everything else starts from the defaults.
 
 ## Usage
 
-1. Install the plugin from the QGIS Plugin Repository.
-2. In QGIS, go to the **Plugins** menu and click on **Clean QGIS** → **Clean QGIS Settings**.
-3. Select which setting categories to clean, or use **Clean All Settings (Full Clean)** to remove everything.
-4. Confirm the operation in the dialog box.
-5. Click Close to exit QGIS, then reopen it manually.
+1. In QGIS, open **Plugins → QGIS Settings Cleaner → Clean All Settings and Close QGIS...**
+2. Read the confirmation: it shows the folder that will be deleted and what is in it.
+   **Cancel** is the default; click **Delete Profile and Close QGIS** to go ahead.
+3. QGIS closes. Open it again to start with a fresh profile.
 
-⚠️ **Note:** Cleared settings will be permanently removed.
+If some files could not be deleted (on Windows, QGIS keeps a few databases open), the plugin
+says so and shows the folder to delete by hand before opening QGIS again. The files are listed
+in the QGIS log, under "QGIS Settings Cleaner".
+
+⚠️ There is no undo. If you only want to remove some connections or change one option, use
+QGIS itself: right-click the connection in the Browser panel, or **Settings → Options**. To
+start fresh *without* losing the current setup, use **Settings → User Profiles → New Profile**.
+
+## Why use this plugin?
+
+Sometimes a QGIS installation accumulates settings that get in the way, or you want a machine
+back to a known state. This is a quick, safe way to do it, especially for:
+
+- Troubleshooting
+- Testing new versions
+- Training rooms
+- Shared workstations
 
 ## Installation
 
-This plugin is available via the [QGIS Plugin Repository](https://plugins.qgis.org/), or you can install manually:
+From the [QGIS Plugin Repository](https://plugins.qgis.org/plugins/qgis_settings_cleaner/)
+(**Plugins → Manage and Install Plugins...**), or by hand:
 
 1. Download or clone this repository.
-2. Copy the folder to your QGIS plugins directory:
-   - **Linux:** `~/.local/share/QGIS/QGIS3/profiles/default/python/plugins/`
-   - **Windows:** `%APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\`
-   - **macOS:** `~/Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins/`
-3. Restart QGIS and activate the plugin via the **Plugins** menu.
+2. Copy the folder, named `qgis_settings_cleaner`, to the plugins folder of your profile. In
+   QGIS, **Settings → User Profiles → Open Active Profile Folder** takes you there; the
+   plugins live in `python/plugins/` inside it.
+3. Restart QGIS and enable the plugin in **Plugins → Manage and Install Plugins...**
 
 ## Translations
 
-The plugin supports the following languages:
-- English (`en`)
-- Portuguese (`pt`)
-
-Additional translations can be added by contributing `.ts` and `.qm` files in the `i18n/` folder.
-
-## Generating `resources_rc.py`
-
-This plugin uses Qt resource files defined in `resources.qrc`. The compiled Python file `resources_rc.py` is **not included in version control** (`.gitignore`), so it must be generated manually.
-
-### Generate with:
+The interface is in English and Portuguese (`i18n/QGISSettingsCleaner_pt.ts`); QGIS picks the
+language from its own locale setting. The compiled `.qm` is versioned so that a clone works as
+is. After changing a string in the code, refresh the `.ts` and recompile:
 
 ```bash
-pyrcc5 resources.qrc -o resources_rc.py
+pylupdate5 -noobsolete qgis_settings_cleaner.py -ts i18n/QGISSettingsCleaner_pt.ts
+lrelease i18n/QGISSettingsCleaner_pt.ts
 ```
 
-On Linux, install `pyrcc5` with:
+Both tools come with Qt 5 (`pyqt5-dev-tools` and `qttools5-dev-tools` on Debian/Ubuntu); the
+`.qm` they produce also works on QGIS 4. The QGIS LTR container image has both, so from the
+repository root:
 
 ```bash
-sudo apt install pyqt5-dev-tools
+podman run --rm -v "$PWD:/repo" -w /repo docker.io/qgis/qgis:ltr lrelease i18n/QGISSettingsCleaner_pt.ts
 ```
 
-On Windows and macOS, `pyrcc5` is typically bundled with the PyQt5 package.
+## Compatibility
+
+The plugin supports QGIS 3.34+ (Qt 5 / PyQt5) and QGIS 4 (Qt 6 / PyQt6) from the same code:
+
+- Qt is imported through `qgis.PyQt`, never `PyQt5` or `PyQt6` directly (`ruff check` flags it).
+- Enums use the scoped form (`QMessageBox.StandardButton.Cancel`), the only one PyQt6 has.
+- Dialogs use `exec()`, not `exec_()`.
+- The icon is read from disk; there is no `resources.qrc` (the `pyrcc5` output imports PyQt5).
 
 ## License
 
-This program is licensed under GNU GPL v.2 or any later version.
+Copyright (C) 2025-2026 SEGEO/DITEC/PF. This program is licensed under the GNU GPL v2 or any
+later version; see `LICENSE`.
 
 ## Credits
 

@@ -1,11 +1,12 @@
 [general]
 name=QGIS Settings Cleaner
 qgisMinimumVersion=3.34
-description=Simple plugin that clears all QGIS settings and closes the application for a fresh restart.
-description[pt]=Plugin simples que limpa todas as configurações do QGIS e fecha a aplicação para um reinício limpo.
-about=This plugin allows users to clean up and remove all QGIS configuration settings from the local machine. It deletes settings related to language, proxy, CRS, database connections, WFS/WMS, XYZ tiles, and all other saved QGIS preferences. This is useful for resetting QGIS to its default state or preparing an environment for clean deployment or testing.
-about[pt]=Este plugin permite limpar e remover todas as configurações do QGIS armazenadas na máquina local. Ele exclui as configurações relacionadas a idioma, proxy, SRC, conexões com banco de dados, serviços WFS/WMS, ladrilhos XYZ e todas as demais preferências salvas do QGIS. É útil para restaurar o QGIS ao estado padrão ou preparar um ambiente limpo para testes ou implantação.
-version=1.1.0
+qgisMaximumVersion=4.99
+description=Deletes the active QGIS user profile and closes QGIS, for a fresh restart.
+description[pt]=Exclui o perfil de usuário ativo do QGIS e fecha o QGIS, para um reinício limpo.
+about=This plugin resets QGIS by deleting the active user profile: every setting (language, proxy, CRS, connections, WMS/WFS and XYZ services) and everything else kept in the profile (saved passwords, installed plugins, user styles, bookmarks, Processing models and scripts). QGIS then closes and starts with a fresh profile next time. Useful for troubleshooting, training rooms and shared workstations. Project and data files are not touched.
+about[pt]=Este plugin restaura o QGIS excluindo o perfil de usuário ativo: todas as configurações (idioma, proxy, SRC, conexões, serviços WMS/WFS e XYZ) e tudo o mais guardado no perfil (senhas salvas, plugins instalados, estilos do usuário, marcadores espaciais, modelos e scripts do Processamento). O QGIS é fechado e abre com um perfil novo na próxima vez. Útil para resolver problemas, salas de treinamento e estações compartilhadas. Projetos e arquivos de dados não são alterados.
+version=2.0.0
 author=Gilvan Ribeiro de Almeida
 email=g.r.almeida@live.com
 homepage=https://github.com/grbalmeida/qgis-settings-cleaner
@@ -14,7 +15,16 @@ repository=https://github.com/grbalmeida/qgis-settings-cleaner
 category=Plugins
 icon=icon.png
 hasProcessingProvider=no
-tags=reset,settings,cleanup,qgis,configuration
+tags=reset,settings,cleanup,profile,qgis,configuration
 experimental=False
 deprecated=False
 server=False
+changelog=2.0.0
+      - Runs on QGIS 4 (Qt 6) as well as QGIS 3.34+
+      - Removed the selective cleanup by category (see issue #1)
+      - The confirmation dialog says what is deleted and defaults to Cancel
+      - Removed the toolbar button; the plugin lives in the Plugins menu only
+      1.1.0
+      - Selective cleanup by category
+      1.0.0
+      - Initial release

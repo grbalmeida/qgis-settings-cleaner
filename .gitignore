@@ -1,2 +1,1 @@
-resources_rc.py
-*.qm
+__pycache__/

@@ -1,4 +1,4 @@
-"""QGIS Settings Cleaner: resets the active QGIS user profile and closes QGIS.
+"""QGIS Settings Cleaner: clears every QGIS setting and closes QGIS.
 
 Copyright (C) 2025-2026 SEGEO/DITEC/PF
 Author: Gilvan Ribeiro de Almeida
@@ -12,12 +12,20 @@ version.
 import os
 import shutil
 
-from qgis.core import QgsApplication, QgsTask
-from qgis.PyQt.QtCore import QCoreApplication, QObject, QSettings, QTranslator
+from qgis.core import Qgis, QgsApplication, QgsTask
+from qgis.PyQt.QtCore import (
+    QCoreApplication,
+    QObject,
+    QSettings,
+    QTimer,
+    QTranslator,
+)
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
 
 NAME = "QGIS Settings Cleaner"
+HINT_SETTING = "plugins/qgis_settings_cleaner/where_to_find_shown"
+HINT_DELAY_MS = 5000
 
 
 class QGISSettingsCleaner(QObject):
@@ -42,26 +50,54 @@ class QGISSettingsCleaner(QObject):
     def initGui(self):
         self.action = QAction(
             QIcon(os.path.join(self.plugin_dir, "icon.png")),
-            self.tr("Reset User Profile and Close QGIS..."),
+            self.tr("Clear All QGIS Settings and Close..."),
             self.iface.mainWindow(),
         )
         self.action.triggered.connect(self.clean_settings)
-        # Menu only: a one-click wipe does not belong on the toolbar.
         self.iface.addPluginToMenu("&" + NAME, self.action)
+        self.iface.addToolBarIcon(self.action)
+        self.show_where_to_find()
 
     def unload(self):
+        self.iface.removeToolBarIcon(self.action)
         self.iface.removePluginMenu("&" + NAME, self.action)
         QCoreApplication.removeTranslator(self.translator)
 
+    def show_where_to_find(self):
+        """Says where the plugin is, once: a menu entry is easy to miss.
+
+        The flag lives in the settings this plugin deletes, so the message
+        comes back for whoever installs it again. The wait lets the messages
+        other plugins push while QGIS starts come first, so this one is the
+        one on top; the flag is only set once the message is really shown.
+        """
+
+        if QSettings().value(HINT_SETTING, False, type=bool):
+            return
+        QTimer.singleShot(HINT_DELAY_MS, self.push_where_to_find)
+
+    def push_where_to_find(self):
+        QSettings().setValue(HINT_SETTING, True)
+        # No timeout: the message is shown once, and it waits to be read.
+        self.iface.messageBar().pushMessage(
+            NAME,
+            self.tr(
+                "Installed. It is the broom on the Plugins toolbar, and it is "
+                "in the Plugins menu."
+            ),
+            Qgis.MessageLevel.Info,
+            0,
+        )
+
     @staticmethod
-    def profile_path():
-        """Folder of the active user profile, without the trailing separator QGIS adds."""
+    def settings_path():
+        """Folder QGIS keeps its settings in, without the trailing separator QGIS adds."""
 
         return os.path.normpath(QgsApplication.qgisSettingsDirPath())
 
     def clean_settings(self):
         # QGIS refuses to exit while such tasks run, so it would stay open on
-        # an emptied profile; refusing here keeps everything in place. (Tasks
+        # an emptied folder; refusing here keeps everything in place. (Tasks
         # flagged CancelWithoutPrompt, like the news feed, QGIS cancels itself.)
         tasks = QgsApplication.taskManager().activeTasks()
         if any(not (task.flags() & QgsTask.Flag.CancelWithoutPrompt) for task in tasks):
@@ -74,8 +110,8 @@ class QGISSettingsCleaner(QObject):
             )
             return
 
-        profile = self.profile_path()
-        if not self.confirm(profile):
+        folder = self.settings_path()
+        if not self.confirm(folder):
             return
 
         # Closing the project first lets QGIS ask about unsaved changes while
@@ -84,44 +120,47 @@ class QGISSettingsCleaner(QObject):
         if not self.iface.newProject(True):
             return
 
-        leftovers = self.empty_profile(profile)
+        leftovers = self.empty_folder(folder)
         if leftovers:
-            self.warn_leftovers(profile, leftovers)
+            self.warn_leftovers(folder, leftovers)
 
         self.iface.actionExit().trigger()
 
-    def confirm(self, profile):
+    def confirm(self, folder):
         box = QMessageBox(self.iface.mainWindow())
         box.setWindowTitle(NAME)
         box.setIcon(QMessageBox.Icon.Warning)
-        box.setText(self.tr("Reset the active QGIS user profile and close QGIS?"))
+        box.setText(self.tr("Clear all QGIS settings and close QGIS?"))
         box.setInformativeText(
             self.tr(
-                "Everything in this folder will be deleted:\n{}\n\n"
-                "That is every QGIS setting and everything else kept in the "
-                "profile: data source connections and saved passwords, installed "
-                "plugins (this one included), user styles, spatial bookmarks, and "
-                "Processing models and scripts. Project and data files are not "
-                "affected.\n\n"
-                "If the current project has unsaved changes, QGIS asks whether to "
-                "save it; then QGIS closes. Open it again to start with a fresh "
-                "profile. This cannot be undone."
-            ).format(profile)
+                "QGIS will go back to the state it had right after installation. "
+                "This deletes everything QGIS keeps about you: settings and "
+                "options, data source connections and saved passwords, installed "
+                "plugins (this one included), styles, spatial bookmarks, and "
+                "Processing models and scripts.\n\n"
+                "This applies to every installation of this QGIS version on this "
+                "computer, because they share these files. Your projects and data "
+                "files are not affected.\n\n"
+                "This cannot be undone. If the current project has unsaved "
+                "changes, QGIS asks about them first; then QGIS closes. Open it "
+                "again to start over.\n\n"
+                "Folder that will be emptied:\n{}"
+            ).format(folder)
         )
-        reset = box.addButton(
-            self.tr("Reset Profile and Close QGIS"),
+        clear = box.addButton(
+            self.tr("Clear Settings and Close QGIS"),
             QMessageBox.ButtonRole.DestructiveRole,
         )
-        # Enter cancels; the wipe takes a deliberate click.
+        # Enter cancels; the deletion takes a deliberate click.
         box.setDefaultButton(box.addButton(QMessageBox.StandardButton.Cancel))
         box.exec()
-        return box.clickedButton() is reset
+        return box.clickedButton() is clear
 
     @staticmethod
-    def empty_profile(profile):
-        """Deletes what the profile folder holds; returns (path, reason) for what it could not.
+    def empty_folder(folder):
+        """Deletes what the settings folder holds; returns (path, reason) for what it could not.
 
-        The folder itself stays, so a profile that is a symbolic link keeps
+        The folder itself stays, so a folder that is a symbolic link keeps
         pointing where it did.
         """
 
@@ -130,7 +169,7 @@ class QGISSettingsCleaner(QObject):
         def on_error(function, path, exc_info):
             leftovers.append((path, exc_info[1].strerror))
 
-        for entry in os.scandir(profile):
+        for entry in os.scandir(folder):
             if entry.is_dir(follow_symlinks=False):
                 shutil.rmtree(entry.path, onerror=on_error)
             else:
@@ -141,14 +180,14 @@ class QGISSettingsCleaner(QObject):
 
         return leftovers
 
-    def warn_leftovers(self, profile, leftovers):
+    def warn_leftovers(self, folder, leftovers):
         self.warn(
             self.tr("Some files could not be deleted."),
             self.tr(
                 "They are probably still in use. QGIS will close now; before "
                 "opening it again, delete what is left in this folder by hand:\n{}\n\n"
                 "The files are listed under Show Details."
-            ).format(profile),
+            ).format(folder),
             "\n".join(f"{path}: {reason}" for path, reason in leftovers),
         )
 

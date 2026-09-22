@@ -1,52 +1,51 @@
 # QGIS Settings Cleaner
 
-A small QGIS plugin that **resets QGIS to a fresh state**: it deletes everything in the active
-user profile and closes QGIS, so the next start begins from scratch.
+A small QGIS plugin that **clears all QGIS settings**: it deletes everything QGIS keeps about
+you and closes QGIS, which then starts as if it had just been installed.
 
 Runs on QGIS 3.34+ and QGIS 4.
 
 ## What it does
 
-QGIS keeps everything about *your* QGIS in a user profile folder: settings (language, proxy,
-CRS, ...), data source connections and their saved passwords, installed plugins, user styles,
-spatial bookmarks, Processing models and scripts. The plugin deletes everything in that folder
-— this plugin included — and closes QGIS. Project files and data are not touched — only the
-profile.
+QGIS keeps everything about *your* QGIS in one folder, the active user profile: settings
+(language, proxy, CRS, ...), data source connections and their saved passwords, installed
+plugins, user styles, spatial bookmarks, Processing models and scripts. The plugin deletes
+everything in that folder, this plugin included, and closes QGIS. Only that folder is emptied;
+project files and data are not touched.
+
+Every installation of the same QGIS version on the computer shares that folder, so all of them
+are affected. QGIS 3 and QGIS 4 keep separate folders, and the plugin only clears the one of
+the QGIS it is running in.
 
 When QGIS closes it writes a few things back (window layout, an empty bookmark list, the Python
 console history), so the folder is left with only those; everything else starts from the defaults.
 
+It is a quick way to get a machine back to a known state, for troubleshooting, testing new
+versions, training rooms and shared workstations.
+
 ## Usage
 
-1. In QGIS, open **Plugins → QGIS Settings Cleaner → Reset User Profile and Close QGIS...**
-2. Read the confirmation: it shows the folder that will be emptied and what it holds.
-   **Cancel** is the default; click **Reset Profile and Close QGIS** to go ahead.
+1. In QGIS, click the broom on the **Plugins** toolbar, or open
+   **Plugins → QGIS Settings Cleaner → Clear All QGIS Settings and Close...**
+2. Read the confirmation: it says what is deleted and shows the folder that will be emptied.
+   **Cancel** is the default; click **Clear Settings and Close QGIS** to go ahead.
 3. If the current project has unsaved changes, QGIS asks whether to save it. Cancelling there
-   cancels the reset too; nothing has been deleted yet.
-4. QGIS closes. Open it again to start with a fresh profile.
+   cancels the cleanup too; nothing has been deleted yet.
+4. QGIS closes. Open it again to start over.
 
 While tasks run in the background (a Processing algorithm, a layer export), the plugin refuses
 with a message and deletes nothing: QGIS would not close with them running. On QGIS 3 there is
 one more case: an unsaved script in the Python console editor is only asked about when QGIS
-exits, after the profile was emptied, and cancelling there leaves QGIS open on the empty
-profile. QGIS 4 asks before, together with the project.
+exits, after the folder was emptied, and cancelling there leaves QGIS open on an empty folder.
+QGIS 4 asks before, together with the project.
 
 If some files could not be deleted (QGIS may still have them open), the plugin says so and
 shows the folder to clean by hand before opening QGIS again; **Show Details** lists the files.
 
 ⚠️ There is no undo. If you only want to remove some connections or change one option, use
 QGIS itself: right-click the connection in the Browser panel, or **Settings → Options**. To
-start fresh *without* losing the current setup, use **Settings → User Profiles → New Profile**.
-
-## Why use this plugin?
-
-Sometimes a QGIS installation accumulates settings that get in the way, or you want a machine
-back to a known state. This is a quick way to do it, especially for:
-
-- Troubleshooting
-- Testing new versions
-- Training rooms
-- Shared workstations
+start fresh *without* losing the current setup, use **Settings → User Profiles → New Profile**,
+which leaves the current settings untouched in their own profile.
 
 ## Installation
 
@@ -58,6 +57,8 @@ From the [QGIS Plugin Repository](https://plugins.qgis.org/plugins/qgis_settings
    QGIS, **Settings → User Profiles → Open Active Profile Folder** takes you there; the
    plugins live in `python/plugins/` inside it.
 3. Restart QGIS and enable the plugin in **Plugins → Manage and Install Plugins...**
+
+The first time the plugin loads it says, in the message bar, where to find it.
 
 ## Translations
 
@@ -123,6 +124,7 @@ later version; see `LICENSE`.
 
 ## Credits
 
-This plugin is published on behalf of the Brazilian Federal Police (SEGEO/DITEC/PF), under authorization of the institution, and is part of the Inteligeo initiative.
-
-Official release authorized by the [Technical-Scientific Directorate of the Brazilian Federal Police (SEGEO/DITEC/PF)](https://www.gov.br/pf/pt-br/acesso-a-informacao/estatisticas/diretoria-tecnico-cientifica-ditec).
+This plugin is part of the Inteligeo initiative and is published on behalf of SEGEO/DITEC, the
+geoprocessing service of the [Technical-Scientific Directorate of the Brazilian Federal
+Police](https://www.gov.br/pf/pt-br/acesso-a-informacao/estatisticas/diretoria-tecnico-cientifica-ditec),
+with the authorization of the institution.
